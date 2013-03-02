@@ -4,6 +4,8 @@ import com.grailsrocks.authentication.*
 
 class AuthenticationTagLibTests extends GroovyTestCase {
 
+	def grailsApplication
+	
 	void testAuthForm() {
 		def tag = new AuthenticationTagLib()
 		
@@ -30,7 +32,7 @@ class AuthenticationTagLibTests extends GroovyTestCase {
     void testAuthFormDefaultingSuccessErrorParams() {
 		def tag = new AuthenticationTagLib()
 
-        def webreq = GrailsWebUtil.bindMockWebRequest()
+        def webreq = GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         webreq.request[GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE] = "test"
         webreq.request[GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE] = "hello"
     
@@ -56,7 +58,7 @@ class AuthenticationTagLibTests extends GroovyTestCase {
     void testAuthFormDefaultingActionOnlyIfDefaultingController() {
 		def tag = new AuthenticationTagLib()
 
-        def webreq = GrailsWebUtil.bindMockWebRequest()
+        def webreq = GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         webreq.request[GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE] = "test"
         webreq.request[GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE] = "hello"
 
@@ -95,7 +97,7 @@ class AuthenticationTagLibTests extends GroovyTestCase {
 		def tag = new AuthenticationTagLib()
 		
 		
-        def webreq = GrailsWebUtil.bindMockWebRequest()
+        def webreq = GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         webreq.request[GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE] = "test"
         webreq.request[GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE] = "hello"
 
@@ -113,7 +115,7 @@ class AuthenticationTagLibTests extends GroovyTestCase {
 		def tag = new AuthenticationTagLib()
 		
 		
-        def webreq = GrailsWebUtil.bindMockWebRequest()
+        def webreq = GrailsWebUtil.bindMockWebRequest(grailsApplication.mainContext)
         webreq.request[GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE] = "test"
         webreq.request[GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE] = "hello"
 

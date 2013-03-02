@@ -1,5 +1,8 @@
 package com.grailsrocks.authentication
 
+import grails.validation.Validateable;
+
+@Validateable
 class SignupForm implements Serializable {
 	String login
 	String email

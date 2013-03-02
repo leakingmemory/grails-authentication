@@ -1,5 +1,8 @@
 package com.grailsrocks.authentication
 
+import grails.validation.Validateable;
+
+@Validateable
 class LoginForm implements Serializable {
 	String login
 	String password

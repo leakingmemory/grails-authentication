@@ -71,7 +71,7 @@ class AuthenticationService {
 		user.status = STATUS_AWAITING_CONFIRMATION
 
 		// See if confirmation required, onConfirmAccount will return true if so
-		if (!params.suppressConfirmation && fireEvent('ConfirmAccount', user)) {
+		if (!params.suppressConfirmation && fireEvent('ConfirmAccount', user)) { //TODO: suppressConfirmation is never utilized. remove?
 			logInImmediately = false // these are mutually exclusive settings
 		} else {
 			user.status = STATUS_VALID
