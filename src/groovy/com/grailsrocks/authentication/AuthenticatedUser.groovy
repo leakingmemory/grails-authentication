@@ -24,8 +24,9 @@ class AuthenticatedUser implements Serializable {
 	
 	/**
 	 * True if email address has been confirmed to work
+	 * Does not seem to be in use
 	 */
-	boolean confirmed
+	//boolean confirmed 
 
 	/**
 	 * The domain object id of the user principal object for this account

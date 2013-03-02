@@ -92,7 +92,11 @@ class AuthenticationService {
 		// Convert the status to a result code
 		authUser.result = userStatusToResult(user.status)
 
-        if ((authUser.result == 0) || (authUser.result == AuthenticatedUser.AWAITING_CONFIRMATION)) {
+		// Setting the session user if not intended to log in automatically considered harmful
+		// as it is easy to make logic mistakes when checking resource level authorization by
+		// assuming that user is in session only if authenticated i.e. logged in
+		// e.g. if( resource.authorId == getSessionUser().login) allowAccess();
+        if ((authUser.result == 0) && logInImmediately){// || (authUser.result == AuthenticatedUser.AWAITING_CONFIRMATION)) {
             setSessionUser(authUser)
         } else {
             setSessionUser(null)
@@ -112,6 +116,17 @@ class AuthenticationService {
 		return fireEvent('FindByLogin', login)
 	}
 
+	AuthenticatedUser getUser(login){
+		def domainUser = fireEvent('FindByLogin', login)
+		if (domainUser) {
+			def user = new AuthenticatedUser(login:login)
+			user.result = userStatusToResult(domainUser.status)
+			user.userObjectId = domainUser.id
+			user.loggedIn = false
+			return user 
+		}
+	}
+	
 	AuthenticatedUser login(login, pass) {
 		def user = fireEvent('FindByLogin', login)
 		
@@ -131,6 +146,25 @@ class AuthenticationService {
 		}
 		return token 
 	}
+	
+	protected void doLoggedIn(AuthenticatedUser user) {
+		user.loggedIn = true
+		user.loginTime = new Date()
+		if (log.infoEnabled) {
+			log.info("Logged in user ${user.login}")
+		}
+		// Fire event
+		fireEvent('LoggedIn', user)
+	}
+	
+	void logIn(AuthenticatedUser user) {
+		setSessionUser(user)
+		doLoggedIn(user)
+	}
+
+	
+	
+	
 
 	protected userStatusToResult(def userStatus) {
 		def value
@@ -149,21 +183,14 @@ class AuthenticationService {
 		return value
 	}
 	
-	protected void doLoggedIn(AuthenticatedUser user) {
-		user.loggedIn = true
-		user.loginTime = new Date()
-		if (log.infoEnabled) {
-			log.info("Logged in user ${user.login}")
-		}
-		// Fire event
-		fireEvent('LoggedIn', user)
-	}
 	
 	void logout(AuthenticatedUser authenticatedUser) {
 		if (log.debugEnabled) {
 			log.debug("Logging out with authenticated user object ${authenticatedUser}")
 		}
 		authenticatedUser.loggedIn = false
+		setSessionUser(null) // Why to leave the user to session. Again considered harmful.
+		
 		if (log.infoEnabled) {
 			log.info("Logged out user ${authenticatedUser.login}")
 		}
@@ -186,7 +213,8 @@ class AuthenticationService {
 				throw new RuntimeException("Unable to save confirmed user $user")
 			}
             // Update the session to indicate user is logged in
-			getSessionUser()?.result = userStatusToResult(user.status)
+			if(getSessionUser()?.login == login)
+				getSessionUser()?.result = userStatusToResult(user.status)
 			return true
 		}
 	}
@@ -201,7 +229,7 @@ class AuthenticationService {
 	AuthenticatedUser getSessionUser() {
 	    def attribs = RequestContextHolder.requestAttributes
 	    if (attribs) {
-	        return attribs.request.session.getAttribute(SESSION_KEY_AUTH_USER)		
+	        return attribs.request.session.getAttribute(SESSION_KEY_AUTH_USER)
         }
 	}
 	
@@ -345,7 +373,7 @@ class AuthenticationService {
 	
 	// Called to check it the current request has a successfully logged in user
 	boolean isLoggedIn(request) {
-	    def user = request.session.getAttribute(SESSION_KEY_AUTH_USER)
+	    def user = getSessionUser()
 		return (user?.result == 0) && user?.loggedIn
 	}
 	
@@ -363,13 +391,13 @@ class AuthenticationService {
         }
 
         // do authorisation events
-        if (fireEvent("CheckAuthorized", [request: request, user: request.session.getAttribute(SESSION_KEY_AUTH_USER),
+        if (fireEvent("CheckAuthorized", [request: request, user: getSessionUser(),
                 controllerName: request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE), 
                 actionName: request.getAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE) ] )) {
-    	    if (log.debugEnabled) log.debug("Filtering request - user ${request.session.getAttribute(SESSION_KEY_AUTH_USER)} authorized access")
+    	    if (log.debugEnabled) log.debug("Filtering request - user ${getSessionUser()} authorized access")
             return true
         } else {
-    	    if (log.debugEnabled) log.debug("Filtering request - user ${request.session.getAttribute(SESSION_KEY_AUTH_USER)} denied access")
+    	    if (log.debugEnabled) log.debug("Filtering request - user ${getSessionUser()} denied access")
             // Let the app know, for logging etc
             fireEvent("UnauthorizedAccess", [request:request, response:response])
             return false
@@ -408,13 +436,13 @@ class AuthenticationService {
         }
 
         // do authorisation events
-        if (fireEvent("HasAuthorization", [requirement:requirement, request: request, user: request.session.getAttribute(SESSION_KEY_AUTH_USER),
+        if (fireEvent("HasAuthorization", [requirement:requirement, request: request, user: getSessionUser(),
                 controllerName: request.getAttribute(GrailsApplicationAttributes.CONTROLLER_NAME_ATTRIBUTE), 
                 actionName: request.getAttribute(GrailsApplicationAttributes.ACTION_NAME_ATTRIBUTE) ] )) {
-    	    if (log.debugEnabled) log.debug("Authorizing request - user ${request.session.getAttribute(SESSION_KEY_AUTH_USER)} authorized access")
+    	    if (log.debugEnabled) log.debug("Authorizing request - user ${getSessionUser()} authorized access")
             return true
         } else {
-    	    if (log.debugEnabled) log.debug("Authorizing request - user ${request.session.getAttribute(SESSION_KEY_AUTH_USER)} denied access")
+    	    if (log.debugEnabled) log.debug("Authorizing request - user ${getSessionUser()} denied access")
             // Let the app know, for logging etc
             fireEvent("UnauthorizedAccess", [request:request, response:response])
             return false
