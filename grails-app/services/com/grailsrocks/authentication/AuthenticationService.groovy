@@ -185,16 +185,19 @@ class AuthenticationService {
 	
 	
 	void logout(AuthenticatedUser authenticatedUser) {
-		if (log.debugEnabled) {
-			log.debug("Logging out with authenticated user object ${authenticatedUser}")
+		if(authenticatedUser){ // If session timeouted there is no user
+			if (log.debugEnabled) {
+				log.debug("Logging out with authenticated user object ${authenticatedUser}")
+			}
+			
+			authenticatedUser.loggedIn = false
+			setSessionUser(null) // Why to leave the user to session. Again considered harmful.
+			
+			if (log.infoEnabled) {
+				log.info("Logged out user ${authenticatedUser.login}")
+			}
+			fireEvent('LoggedOut', authenticatedUser)
 		}
-		authenticatedUser.loggedIn = false
-		setSessionUser(null) // Why to leave the user to session. Again considered harmful.
-		
-		if (log.infoEnabled) {
-			log.info("Logged out user ${authenticatedUser.login}")
-		}
-		fireEvent('LoggedOut', authenticatedUser)
 	}
 	
 	/**
