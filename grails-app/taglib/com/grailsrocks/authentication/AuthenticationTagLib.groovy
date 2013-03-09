@@ -28,13 +28,22 @@ class AuthenticationTagLib {
 		}
 	}
 	
+	protected encode(attrs, toEncode){
+		def codec = attrs.codec != null ? (attrs.codec ?: 'HTML') : null
+		if(!codec && grailsApplication.config.grails.views.default.codec)
+			codec = grailsApplication.config.grails.views.default.codec
+		return (codec ? toEncode?."encodeAs$codec"() : toEncode)
+	}
+	
 	def user = { attrs -> 
 		if (checkLoggedIn()) {
 		    def u = session[AuthenticationService.SESSION_KEY_AUTH_USER]
 		    if (u) {
 		        def codec = attrs.codec != null ? (attrs.codec ?: 'HTML') : null
+				if(!codec && grailsApplication.config.grails.views.default.codec)
+					codec = grailsApplication.config.grails.views.default.codec
 		        def v = u[attrs.property ? attrs.property : 'login'] 
-			    out << (codec ? v?."encodeAs$codec"() : v)
+			    out << encode(attrs, v)
 		    }
 		}
 	}
@@ -45,7 +54,7 @@ class AuthenticationTagLib {
 		    if (u) {
 		        def codec = attrs.codec != null ? (attrs.codec ?: 'HTML') : null
 		        def v = u[attrs.property ? attrs.property : 'login'] 
-			    out << (codec ? v?."encodeAs$codec"() : v)
+			    out << encode(attrs, v)
 		    }
 		}
 	}
