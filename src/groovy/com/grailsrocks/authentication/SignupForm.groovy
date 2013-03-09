@@ -11,10 +11,12 @@ class SignupForm implements Serializable {
 	
 	boolean rememberMe
 	
+	def authenticationService
+	
 	static constraints = {
-		login(size:6..40, blank:false, nullable: false)
+		login(size:6..40, blank:false, nullable: false, validator: { val, obj -> obj.authenticationService.checkLogin(val) })
 		email(email:true, size:6..40, blank:false, nullable: false)
-		password(size:6..40, password:true, blank:false, nullable: false)
+		password(size:6..40, password:true, blank:false, nullable: false, validator: { val, obj -> obj.authenticationService.checkPassword(val) })
 		passwordConfirm(password:true, validator: { val, obj -> obj.password == val })
 	}
 }
