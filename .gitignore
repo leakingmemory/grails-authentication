@@ -4,3 +4,8 @@ target/
 .project
 .classpath
 .link_to_grails_plugins
+.DS_Store
+.idea/**/*
+.idea/*
+*.iml
+docs/
