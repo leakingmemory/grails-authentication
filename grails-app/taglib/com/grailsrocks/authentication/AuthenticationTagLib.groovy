@@ -30,7 +30,6 @@ class AuthenticationTagLib {
 	
 	protected encode(attrs, toEncode){
 		def codec = attrs.codec ?: 'HTML'
-        println "${codec}"
 		if(!codec && grailsApplication.config.grails.views.default.codec)
 			codec = grailsApplication.config.grails.views.default.codec
 		return (codec ? toEncode?."encodeAs$codec"() : toEncode)
@@ -44,7 +43,6 @@ class AuthenticationTagLib {
 				if(!codec && grailsApplication.config.grails.views.default.codec)
 					codec = grailsApplication.config.grails.views.default.codec
 		        def v = u[attrs.property ? attrs.property : 'login']
-                println (encode(attrs, v))
 			    out << encode(attrs, v)
 		    }
 		}
