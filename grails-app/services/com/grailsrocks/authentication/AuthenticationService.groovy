@@ -84,6 +84,7 @@ class AuthenticationService {
 
 		// Store user id for quick lookups later
 		authUser.userObjectId = user.id
+        authUser.userObject = getUserDomainObjectById(user.id)
 		
 		if (log.infoEnabled) {
 			log.info("Sign up complete for user ${login}")
@@ -122,6 +123,7 @@ class AuthenticationService {
 			def user = new AuthenticatedUser(login:login)
 			user.result = userStatusToResult(domainUser.status)
 			user.userObjectId = domainUser.id
+            user.userObject = domainUser
 			user.loggedIn = false
 			return user 
 		}
@@ -141,11 +143,18 @@ class AuthenticationService {
 		} else {
 			token.result = userStatusToResult(user.status)
 			token.userObjectId = user.id
+            token.userObject = user
             setSessionUser(token)		    
 			doLoggedIn(token)
 		}
 		return token 
 	}
+
+    AuthenticatedUser loginWithEmail(email, pass) {
+        def user = fireEvent('FindByEmail', email)
+
+        return login(user?.login ?: email, pass)
+    }
 	
 	protected void doLoggedIn(AuthenticatedUser user) {
 		user.loggedIn = true
@@ -304,6 +313,8 @@ class AuthenticationService {
     	onEncodePassword: { password -> password?.encodeAsSHA1() },
     	// Called to load the user object by login id, must retun the user object or null if not found
         onFindByLogin:{ loginID -> AuthenticationService.userDomainClass.findByLogin(loginID) },
+        // Called when a new user object is required, object returned must have login, password, email and status properties
+        onFindByEmail:{ email -> AuthenticationService.userDomainClass.findByEmail(email) },
         // Called when a new user object is required, object returned must have login, password, email and status properties
         onNewUserObject: { loginID -> def obj = AuthenticationService.userDomainClass.newInstance(); obj.login = loginID; return obj },
         // Called when a user object has been changed and needs to be saved

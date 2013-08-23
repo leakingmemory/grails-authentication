@@ -3,73 +3,79 @@ package com.grailsrocks.authentication
 class AuthenticationTagLib {
 
     static namespace = "auth"
-    
+
     def authenticationService
 
-    boolean checkLoggedIn() { 
+    boolean checkLoggedIn() {
         return authenticationService.isLoggedIn(request)
-	}
-	
-	def ifLoggedIn = { attrs, body -> 
-		if (checkLoggedIn()) {
-			out << body()
-		}
-	}
+    }
 
-	def ifUnconfirmed = { attrs, body -> 
-		if (session[AuthenticationService.SESSION_KEY_AUTH_USER]?.result == AuthenticatedUser.AWAITING_CONFIRMATION) {
-			out << body()
-		}
-	}
+    def ifLoggedIn = { attrs, body ->
+        if (checkLoggedIn()) {
+            out << body()
+        }
+    }
 
-	def ifNotLoggedIn = { attrs, body -> 
-		if (!session[AuthenticationService.SESSION_KEY_AUTH_USER] || !checkLoggedIn()) {
-			out << body()
-		}
-	}
-	
-	protected encode(attrs, toEncode){
-		def codec = attrs.codec ?: 'HTML'
-		if(!codec && grailsApplication.config.grails.views.default.codec)
-			codec = grailsApplication.config.grails.views.default.codec
-		return (codec ? toEncode?."encodeAs$codec"() : toEncode)
-	}
-	
-	def user = { attrs -> 
-		if (checkLoggedIn()) {
-		    def u = session[AuthenticationService.SESSION_KEY_AUTH_USER]
-		    if (u) {
-		        def codec = attrs.codec ?: 'HTML'
-				if(!codec && grailsApplication.config.grails.views.default.codec)
-					codec = grailsApplication.config.grails.views.default.codec
-		        def v = u[attrs.property ? attrs.property : 'login']
-			    out << encode(attrs, v)
-		    }
-		}
-	}
+    def ifUnconfirmed = { attrs, body ->
+        if (session[AuthenticationService.SESSION_KEY_AUTH_USER]?.result == AuthenticatedUser.AWAITING_CONFIRMATION) {
+            out << body()
+        }
+    }
 
-	def userPrincipal = { attrs -> 
-		if (checkLoggedIn()) {
-	        def u = authenticationService.userPrincipal
-		    if (u) {
-		        def codec = attrs.codec ?: 'HTML'
-		        def v = u[attrs.property ?: 'login']
-			    out << encode(attrs, v)
-		    }
-		}
-	}
-	
+    def ifNotLoggedIn = { attrs, body ->
+        if (!session[AuthenticationService.SESSION_KEY_AUTH_USER] || !checkLoggedIn()) {
+            out << body()
+        }
+    }
+
+    protected encode(attrs, toEncode) {
+        def codec = attrs.codec ?: 'HTML'
+        if (!codec && grailsApplication.config.grails.views.default.codec)
+            codec = grailsApplication.config.grails.views.default.codec
+        return (codec ? toEncode?."encodeAs$codec"() : toEncode)
+    }
+
+    def user = { attrs ->
+        if (checkLoggedIn()) {
+            def u = session[AuthenticationService.SESSION_KEY_AUTH_USER]
+            if (u) {
+                def codec = attrs.codec ?: 'HTML'
+                if (!codec && grailsApplication.config.grails.views.default.codec)
+                    codec = grailsApplication.config.grails.views.default.codec
+                def v
+                if (u.hasProperty(attrs.property ?: 'login')) {
+                 v = u[attrs.property ?: 'login']
+                }
+                else if (u.userObject.hasProperty(attrs.property)) {
+                    v= u.userObject[attrs.property]
+                }
+                out << encode(attrs, v)
+            }
+        }
+    }
+
+    def userPrincipal = { attrs ->
+        if (checkLoggedIn()) {
+            def u = authenticationService.userPrincipal
+            if (u) {
+                def codec = attrs.codec ?: 'HTML'
+                def v = u[attrs.property ?: 'login']
+                out << encode(attrs, v)
+            }
+        }
+    }
+
     /**
      * Render an authentication form
-     * 
+     *
      * Attributes:
-     * 
+     *
      * action - optional : will default to plugin's authentication controller with "authAction" as action
      * method - optional : defaults to POST (via g:form)
      * successUrl - map of controller/action/id params
      * errorUrl - map of controller/action/id params
      * Usage:
-     * 
+     *
      * <auth:form authAction="login" successUrl="[controller:'portal', action:'justLoggedIn']"
      *     errorUrl="[controller:'content', action:'login']">
      *    <!-- input fields here, auto generated if blank body() -->
@@ -77,12 +83,12 @@ class AuthenticationTagLib {
      */
     def form = { attrs, body ->
         def authAction = attrs.remove('authAction')
-        def args = [success:attrs.remove('success'), error:attrs.remove('error')]
-        
+        def args = [success: attrs.remove('success'), error: attrs.remove('error')]
+
         if (!args.success) {
             args.success = [:]
         }
-        
+
         if (!args.error) {
             args.error = [:]
         }
@@ -91,29 +97,29 @@ class AuthenticationTagLib {
             def theparams = args[it]
             if (!theparams.controller) {
                 theparams.controller = controllerName
-                 // only autocomplete action if we autocomplete controller
-                 if (!theparams.action) theparams.action = actionName
+                // only autocomplete action if we autocomplete controller
+                if (!theparams.action) theparams.action = actionName
             }
         }
-            
+
         def formAttrs = [:] + attrs
         if (!attrs.url) {
             if (!authAction)
                 throwTagError("auth:form tag requires 'authAction' parameter to indicate login action")
-            formAttrs.url = [controller:'authentication', action:authAction]
+            formAttrs.url = [controller: 'authentication', action: authAction]
         }
-            
+
         out << g.form(formAttrs) {
             args.keySet().each() { kind ->
                 def url = args[kind]
                 if (url.controller) {
-                    out << g.hiddenField(name:"${kind}_controller", value: url.controller)
+                    out << g.hiddenField(name: "${kind}_controller", value: url.controller)
                 }
                 if (url.action) {
-                    out << g.hiddenField(name:"${kind}_action", value: url.action)
+                    out << g.hiddenField(name: "${kind}_action", value: url.action)
                 }
                 if (url.id) {
-                    out << g.hiddenField(name:"${kind}_id", value: url.id)
+                    out << g.hiddenField(name: "${kind}_id", value: url.id)
                 }
             }
             if (body) {
@@ -121,9 +127,9 @@ class AuthenticationTagLib {
             }
         }
     }
-    
+
     def logoutLink = { attrs, body ->
-        def attribs = [controller:'authentication', action:'logout', params:[:]]
+        def attribs = [controller: 'authentication', action: 'logout', params: [:]]
         def success = attrs.remove('success') ?: [:]
         if (!success.controller) {
             success.controller = controllerName
@@ -134,7 +140,7 @@ class AuthenticationTagLib {
         if (success.controller) attribs.params["success_controller"] = success.controller
         if (success.action) attribs.params["success_action"] = success.action
         if (success.id) attribs.params["success_id"] = success.id
-        
+
         attrs.url = attribs
         out << g.link(attrs, body)
     }
