@@ -46,4 +46,8 @@ class AuthenticatedUser implements Serializable {
      * The user domain object
      */
     def userObject
+
+    String toString() {
+       return "Login: ${login}, UserObjectId: ${userObjectId}, Login Time: ${loginTime}, User Object: ${userObject}"
+    }
 }
