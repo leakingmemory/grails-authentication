@@ -1,6 +1,5 @@
 package com.grailsrocks.authentication
 
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import org.springframework.context.ApplicationContext
 import org.springframework.beans.factory.InitializingBean
 import org.codehaus.groovy.grails.web.servlet.GrailsApplicationAttributes
@@ -10,6 +9,8 @@ import org.springframework.web.context.request.RequestContextHolder
 import org.springframework.web.context.request.RequestAttributes
 
 class AuthenticationService {
+
+    def grailsApplication
 	
 	static final STATUS_NEW = 0
 	static final STATUS_VALID = 1
@@ -45,7 +46,7 @@ class AuthenticationService {
      * can be captured and passed to the onSignup event.
      */
 	AuthenticatedUser signup(Map params) {
-        assert !ConfigurationHolder.config.authentication?.signup?.disabled, "Cannot perform signup, it is disabled in Config"
+        assert !grailsApplication.config.authentication?.signup?.disabled, "Cannot perform signup, it is disabled in Config"
         
 		def login = params.login
 		def password = params.password
@@ -347,7 +348,7 @@ class AuthenticationService {
     void configChanged() {
         log.info "Authentication reloading settings from config"
         // Take events from config if found
-        def configObj = ConfigurationHolder.config
+        def configObj = grailsApplication.config
         if (configObj.authenticationEvents) {
             events = configObj.authenticationEvents 
             log.info "Authentication loaded custom events from Config"

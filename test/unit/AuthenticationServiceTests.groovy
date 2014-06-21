@@ -1,15 +1,16 @@
 import groovy.mock.interceptor.*
 import com.grailsrocks.authentication.*
 import org.springframework.mock.web.*
-import org.codehaus.groovy.grails.commons.ConfigurationHolder
 import grails.test.GrailsUnitTestCase
 
 class AuthenticationServiceTests extends GrailsUnitTestCase {
 
+    def grailsApplication
+
     void setUp() {
         super.setUp()
-        
-        ConfigurationHolder.config = new groovy.util.ConfigObject() // mock it
+
+        grailsApplication.config = new groovy.util.ConfigObject() // mock it
         mockLogging(AuthenticationService)
     }
     
@@ -184,8 +185,8 @@ class AuthenticationServiceTests extends GrailsUnitTestCase {
 
 	void testCustomDomainClass() {
 		def service = new AuthenticationService()
-		
-		ConfigurationHolder.config.authenticationUserClass = FakeDomain
+
+        grailsApplication.config.authenticationUserClass = FakeDomain
 		
 		service.configChanged()
 		
